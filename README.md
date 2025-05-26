@@ -1,5 +1,5 @@
 # Jeux tetris en ligne de commande pour apprentissage base Python
-mise en place environement de dev
+mise en place environement de dev pour tout le monde
 
 python -m venv env_tetris
 .\env_tetris\Scripts\activate
