@@ -1,0 +1,19 @@
+# Environnement Virtuel
+env_app_pseudo/
+*.venv/
+.env/
+
+# Fichiers Python compilés et caches
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Fichiers IDE (optionnel)
+.vscode/
+# .idea/
+
+# Fichiers de données temporaires ou sensibles (si applicable)
+*.log
+*.tmp
+*.sqlite3
+*.db
