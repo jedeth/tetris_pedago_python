@@ -14,11 +14,11 @@ git init
 
 # copie/lien vers dépot distant
 
-git remote add origin https://github.com/jedeth/tetris_pedago_python.git
+git remote add origin https://github.com/"yourName"/tetris_pedago_python.git
 
 git config user.name "jerome"
 
-git config user.email "jexxxx@gmail.com"
+git config user.email "mail@gmail.com"
 
 # ajout .gitignore
 
@@ -39,6 +39,11 @@ git push -u origin main
 touch "requirements.txt"
 
 pip freeze > requirements.txt
+
+# ajout readme à un commit et à un push
+
+git add README.md
+
 
 
 
