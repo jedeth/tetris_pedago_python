@@ -4,7 +4,7 @@ import random # Nécessaire pour choisir les pièces au hasard
 import time # NOUVEAU (était dans ma version précédente, mais peut-être pas dans la vôtre)
 
 # Dimensions de l'arène de Tetris (en nombre de blocs)
-largeur_arene_blocs = 10
+largeur_arene_blocs = 15
 hauteur_arene_blocs = 20
 
 # Taille de chaque bloc de Tetris en pixels
