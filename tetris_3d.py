@@ -23,6 +23,21 @@ rouge = (255, 0, 0)
 vert = (0, 255, 0)
 bleu = (0, 0, 255)
 
+couleur_vide = (30, 30, 30) # Une couleur pour les "vides" si jamais get() ne trouve pas la clé
+                           # Ou vous pouvez utiliser 'noir' si le fond est noir
+
+couleurs_pieces = {
+    1: (255, 255, 0),   # Jaune (par exemple pour la pièce O si vous l'associez au chiffre 1)
+    2: (0, 255, 255),   # Cyan (par exemple pour la pièce I)
+    3: (255, 165, 0),   # Orange (par exemple pour la pièce L)
+    4: (0, 0, 255),     # Bleu foncé (par exemple pour la pièce J)
+    5: (128, 0, 128),   # Violet (par exemple pour la pièce T)
+    6: (0, 255, 0),     # Vert (par exemple pour la pièce S)
+    7: (255, 0, 0)      # Rouge (par exemple pour la pièce Z)
+    # Assurez-vous que les chiffres que vous stockez dans arene_3d_jeu
+    # correspondent aux clés de ce dictionnaire.
+}
+
 # (À ajouter dans votre fichier tetris_3d.py, par exemple après les couleurs)
 piece_I_3D_forme0 = [
     (0, 0, 0),  # Cube à l'origine de la pièce
