@@ -172,33 +172,85 @@ while running:
     temps_actuel = pygame.time.get_ticks()
     
     # Obtenir la forme actuelle pour les vérifications et le dessin
-    # (sera important quand on ajoutera les rotations)
-    forme_actuelle_pour_logique = piece_actuelle_type_rotations[piece_actuelle_rotation_index]
+    # S'assurer que piece_actuelle_type_rotations et piece_actuelle_rotation_index sont valides
+    if piece_actuelle_type_rotations: # Vérifier que la liste n'est pas vide
+        forme_actuelle_pour_logique = piece_actuelle_type_rotations[piece_actuelle_rotation_index]
+    else:
+        # Gérer le cas où la pièce n'est pas initialisée (ne devrait pas arriver après generer_nouvelle_piece_3d)
+        # Peut-être recréer une pièce ou gérer comme game_over
+        generer_nouvelle_piece_3d() # Tentative de récupération
+        if piece_actuelle_type_rotations:
+             forme_actuelle_pour_logique = piece_actuelle_type_rotations[piece_actuelle_rotation_index]
+        else:
+            print("Erreur critique : Impossible de définir la forme de la pièce.")
+            running = False # Quitter si on ne peut pas récupérer
+            continue # Passer au prochain tour de boucle (qui va quitter)
 
-    # Gestion des événements
+
+    # --- Gestion des événements ---
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        if event.type == pygame.KEYDOWN:
+        if event.type == pygame.KEYDOWN: # Ce bloc est pour les actions du joueur
             if event.key == pygame.K_ESCAPE:
                 running = False
-            # TODO: Ajouter les contrôles du joueur ici (si pas game_over)
+            
+            if not game_over: # Les contrôles du joueur ne fonctionnent que si le jeu n'est pas fini
+                # Récupérer la forme actuelle pour la logique de collision des mouvements du joueur
+                # (forme_actuelle_pour_logique est déjà définie en haut de la boucle while)
 
-    # --- Logique du Jeu ---
+                if event.key == pygame.K_LEFT: # ou K_a
+                    prochain_gx = piece_actuelle_gx - 1
+                    if not verifier_collision_3d(arene_3d_jeu, forme_actuelle_pour_logique, 
+                                                 prochain_gx, piece_actuelle_gy, piece_actuelle_gz):
+                        piece_actuelle_gx = prochain_gx
+                elif event.key == pygame.K_RIGHT: # ou K_d
+                    prochain_gx = piece_actuelle_gx + 1
+                    if not verifier_collision_3d(arene_3d_jeu, forme_actuelle_pour_logique, 
+                                                 prochain_gx, piece_actuelle_gy, piece_actuelle_gz):
+                        piece_actuelle_gx = prochain_gx
+                elif event.key == pygame.K_UP: # Déplacer "plus loin" / Y--
+                    prochain_gy = piece_actuelle_gy - 1
+                    if not verifier_collision_3d(arene_3d_jeu, forme_actuelle_pour_logique, 
+                                                 piece_actuelle_gx, prochain_gy, piece_actuelle_gz):
+                        piece_actuelle_gy = prochain_gy
+                elif event.key == pygame.K_DOWN: # Déplacer "plus près" / Y++
+                    prochain_gy = piece_actuelle_gy + 1
+                    if not verifier_collision_3d(arene_3d_jeu, forme_actuelle_pour_logique, 
+                                                 piece_actuelle_gx, prochain_gy, piece_actuelle_gz):
+                        piece_actuelle_gy = prochain_gy
+                elif event.key == pygame.K_f: # Soft drop (ou une autre touche comme K_s)
+                    prochain_gz_soft_drop = piece_actuelle_gz - 1
+                    if not verifier_collision_3d(arene_3d_jeu, forme_actuelle_pour_logique,
+                                                 piece_actuelle_gx, piece_actuelle_gy, prochain_gz_soft_drop):
+                        piece_actuelle_gz = prochain_gz_soft_drop
+                        temps_derniere_chute = temps_actuel # Accélère la prochaine chute naturelle
+                elif event.key == pygame.K_SPACE: # Hard drop
+                    while not verifier_collision_3d(arene_3d_jeu, forme_actuelle_pour_logique,
+                                                    piece_actuelle_gx, piece_actuelle_gy, piece_actuelle_gz - 1):
+                        piece_actuelle_gz -=1
+                    temps_derniere_chute = temps_actuel - vitesse_chute -1 # Force atterrissage immédiat
+                # elif event.key == pygame.K_r: # Pour la rotation future
+                #     print("Rotation (TODO)")
+
+
+    # --- Logique du Jeu (Gravité, Atterrissage, etc.) ---
+    # Ce bloc est maintenant correctement indenté au même niveau que la boucle for event
     if not game_over:
         if temps_actuel - temps_derniere_chute > vitesse_chute:
-            prochain_gz = piece_actuelle_gz - 1
+            prochain_gz = piece_actuelle_gz - 1 # Définition de prochain_gz pour la gravité
             
+            # La vérification de collision est MAINTENANT À L'INTÉRIEUR de ce if
             if not verifier_collision_3d(arene_3d_jeu, forme_actuelle_pour_logique, 
                                          piece_actuelle_gx, piece_actuelle_gy, prochain_gz):
                 piece_actuelle_gz = prochain_gz
             else:
                 # La pièce atterrit !
                 print(f"Pièce {nom_piece_actuelle} atterrit à GZ={piece_actuelle_gz}")
-                for dx, dy, dz in forme_actuelle_pour_logique:
+                for dx, dy, dz_cube in forme_actuelle_pour_logique: # Renommé dz en dz_cube pour éviter confusion
                     ax = piece_actuelle_gx + dx
                     ay = piece_actuelle_gy + dy
-                    az = piece_actuelle_gz + dz
+                    az = piece_actuelle_gz + dz_cube # Utilise dz_cube ici
                     if 0 <= ax < LARGEUR_ARENE_3D and \
                        0 <= ay < PROFONDEUR_ARENE_3D and \
                        0 <= az < HAUTEUR_ARENE_3D:
@@ -209,22 +261,27 @@ while running:
                 generer_nouvelle_piece_3d() # Génère la suivante
                 
                 # Vérifier Game Over pour la NOUVELLE pièce
-                forme_nouvelle_piece = piece_actuelle_type_rotations[piece_actuelle_rotation_index]
-                if verifier_collision_3d(arene_3d_jeu, forme_nouvelle_piece, 
+                # S'assurer que la forme de la nouvelle pièce est bien récupérée
+                forme_nouvelle_piece_logique = piece_actuelle_type_rotations[piece_actuelle_rotation_index]
+                if verifier_collision_3d(arene_3d_jeu, forme_nouvelle_piece_logique, 
                                          piece_actuelle_gx, piece_actuelle_gy, piece_actuelle_gz):
                     game_over = True
                     print("GAME OVER!")
             
-            temps_derniere_chute = temps_actuel
+            temps_derniere_chute = temps_actuel # Réinitialiser le timer de la gravité
 
     # --- Dessin ---
     ecran.fill(noir)
+    # dessiner_grille(ecran) # Optionnel, peut rendre l'affichage chargé en 3D
     dessiner_arene_3d_figee(ecran, arene_3d_jeu, couleurs_pieces)
     
-    if piece_actuelle_definition and not game_over: # Ne dessine la pièce active que si le jeu n'est pas fini
-        dessiner_piece_3d(ecran, forme_actuelle_pour_logique, 
-                          piece_actuelle_gx, piece_actuelle_gy, piece_actuelle_gz, 
-                          piece_actuelle_couleur)
+    if piece_actuelle_definition: # S'assurer qu'une pièce est définie
+        # Utiliser la forme actuelle pour le dessin (qui est à jour après une éventuelle rotation)
+        forme_a_dessiner = piece_actuelle_type_rotations[piece_actuelle_rotation_index] if piece_actuelle_type_rotations else []
+        if forme_a_dessiner and not game_over :
+            dessiner_piece_3d(ecran, forme_a_dessiner, 
+                              piece_actuelle_gx, piece_actuelle_gy, piece_actuelle_gz, 
+                              piece_actuelle_couleur)
     
     if game_over:
         font = pygame.font.Font(None, 74) 
@@ -236,5 +293,4 @@ while running:
     horloge.tick(FPS)
 
 # --- Quitter Pygame ---
-pygame.quit()
-sys.exit()
+# ... (pygame.quit(), sys.exit())
