@@ -182,8 +182,55 @@ def creer_arene_3d_vide(largeur, profondeur, hauteur):
         arene.append(etage)
     return arene
 
+
+# (Ajoutez cette fonction après vos autres fonctions de dessin)
+
+def dessiner_arene_3d_figee(surface, arene_3d, dict_couleurs):
+    """
+    Dessine tous les blocs des pièces déjà atterries et figées dans l'arène 3D.
+    """
+    hauteur = len(arene_3d)
+    profondeur = len(arene_3d[0])
+    largeur = len(arene_3d[0][0])
+
+    # Pour un rendu correct avec la perspective isométrique (effet du peintre simple),
+    # il faut souvent dessiner de "l'arrière vers l'avant", "du bas vers le haut".
+    # L'ordre exact peut dépendre de l'orientation de vos axes.
+    # Un ordre commun : z (hauteur), puis y (profondeur), puis x (largeur).
+    # Ou pour certaines vues : y (profondeur), puis x (largeur), puis z (hauteur).
+    # Essayons z, puis y, puis x :
+    for gz in range(hauteur):
+        for gy in range(profondeur):
+            for gx in range(largeur):
+                valeur_cellule = arene_3d[gz][gy][gx]
+                if valeur_cellule != 0: # Si la cellule contient un bloc figé
+                    couleur_bloc = dict_couleurs.get(valeur_cellule, couleur_vide) # Récupère la couleur
+                    # On dessine le cube. Les variables globales origine_iso_x_ecran et origine_iso_y_ecran
+                    # seront utilisées par dessiner_cube_iso (via projeter_point_iso).
+                    dessiner_cube_iso(surface, gx, gy, gz, couleur_bloc)
 # Utilisation (à mettre dans la section d'initialisation du jeu, avant la boucle principale) :
 # arene_3d_jeu = creer_arene_3d_vide(LARGEUR_ARENE_3D, PROFONDEUR_ARENE_3D, HAUTEUR_ARENE_3D)
+
+# --- Boucle de Jeu Principale ---
+# --- Initialisation de Pygame ---
+pygame.init()
+ecran = pygame.display.set_mode(taille_fenetre)
+pygame.display.set_caption("Tetris 3D - Arène")
+horloge = pygame.time.Clock()
+# origine_iso_x_ecran, origine_iso_y_ecran sont définies
+
+# --- Initialisation du Jeu ---
+arene_3d_jeu = creer_arene_3d_vide(LARGEUR_ARENE_3D, PROFONDEUR_ARENE_3D, HAUTEUR_ARENE_3D)
+
+# Mettons quelques blocs manuellement dans l'arène pour tester l'affichage :
+if HAUTEUR_ARENE_3D > 0 and PROFONDEUR_ARENE_3D > 0 and LARGEUR_ARENE_3D > 0:
+    arene_3d_jeu[0][0][0] = 1 # Bloc type 1 (jaune) au coin (0,0,0) de l'arène (bas, arrière, gauche)
+if HAUTEUR_ARENE_3D > 0 and PROFONDEUR_ARENE_3D > 0 and LARGEUR_ARENE_3D > 1:
+    arene_3d_jeu[0][0][1] = 2 # Bloc type 2 (cyan) à côté
+if HAUTEUR_ARENE_3D > 1 and PROFONDEUR_ARENE_3D > 0 and LARGEUR_ARENE_3D > 0:
+    arene_3d_jeu[1][0][0] = 3 # Bloc type 3 (orange) au-dessus du premier
+
+# (Nous n'avons pas encore de pièce "active" qui tombe dans cette version 3D)
 
 # --- Boucle de Jeu Principale ---
 running = True
@@ -201,24 +248,20 @@ while running:
     # Dessin
     ecran.fill(noir) # Fond de l'écran
 
-    # Position de base où dessiner notre pièce dans le monde 3D
-    # (par exemple, à l'origine de notre grille 3D)
-    base_x_monde = 0
-    base_y_monde = 0
-    base_z_monde = 0
+    # Dessiner les blocs figés dans l'arène 3D
+    dessiner_arene_3d_figee(ecran, arene_3d_jeu, couleurs_pieces)
+    
+    # Plus tard, nous dessinerons ici la pièce qui tombe actuellement, par-dessus l'arène figée.
+    # Pour l'instant, nous pouvons redessiner une pièce de test si vous voulez,
+    # comme nous l'avons fait à l'étape précédente.
+    # base_x_monde = 1
+    # base_y_monde = 1
+    # base_z_monde = 2
+    # couleur_test_L = (255, 165, 0) # Orange
+    # dessiner_piece_3d(ecran, piece_L_3D_forme0, 
+    #                   base_x_monde, base_y_monde, base_z_monde, 
+    #                   couleur_test_L)
 
-    # Dessinons une pièce 'L' 3D
-    couleur_test_L = (255, 165, 0) # Orange
-    dessiner_piece_3d(ecran, piece_L_3D_forme0, 
-                      base_x_monde, base_y_monde, base_z_monde, 
-                      couleur_test_L) 
-    # Vous pouvez essayer de dessiner une autre pièce à côté en changeant base_x_monde, etc.
-    # Par exemple, une pièce I décalée en X et Y :
-    # couleur_test_I = (0, 255, 255) # Cyan
-    # dessiner_piece_3d(ecran, piece_I_3D_forme0,
-    #                   2, 2, 0, # Décalée de 2 en X et 2 en Y
-    #                   couleur_test_I,
-    #                   origine_iso_x_ecran, origine_iso_y_ecran)
 
     pygame.display.flip()
     horloge.tick(FPS)
