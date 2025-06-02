@@ -40,6 +40,8 @@ touch "requirements.txt"
 
 pip freeze > requirements.txt
 
+pip install -r requirements.txt (pour l'opération inverse)
+
 # ajout readme à un commit et à un push
 
 git add README.md
